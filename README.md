@@ -37,8 +37,11 @@ Transparent Development: Built with a "Public-from-day-one" GitHub workflow.
 
 🛠 **Local Development**
 Clone the repo.
+
 Install dependancies: npm install
+
 Run server: npm run dev
+
 
 📚 **Documentation**
 
