@@ -1,7 +1,7 @@
 🤖 **AI Study Planner**
 Transforming static schedules into dynamic, conversational learning systems.
 
-![Demo App](/public/Screenshot-for-ReadME.png)
+![Demo App](/public/screenshot-for-readme.png)
 An AI-powered adaptive study planning engine that transforms static schedules into dynamic, conversational learning systems.
 
 🚀 **The Problem**
