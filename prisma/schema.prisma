@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  clerkId   String   @unique
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assessments   Assessment[]
+  topics        Topic[]
+  studySessions StudySession[]
+}
+
+model Assessment {
+  id        String   @id @default(uuid())
+  title     String
+  dueDate   DateTime
+  weight    Float
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+}
+
+model Topic {
+  id         String   @id @default(uuid())
+  name       String
+  difficulty Int
+  mastery    Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+}
+
+model StudySession {
+  id          String   @id @default(uuid())
+  title       String
+  scheduledAt DateTime
+  duration    Int
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  reflections Reflection[]
+}
+
+model Reflection {
+  id        String   @id @default(uuid())
+  sentiment String?
+  completed Boolean
+  createdAt DateTime @default(now())
+
+  session   StudySession @relation(fields: [sessionId], references: [id])
+  sessionId String
+}

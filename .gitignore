@@ -140,3 +140,5 @@ vite.config.ts.timestamp-*
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+/src/generated/prisma
