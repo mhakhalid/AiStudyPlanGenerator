@@ -45,6 +45,7 @@ describe("SessionService.updateStatus", () => {
         ...mockSession,
         status: SessionStatus.COMPLETED,
       }),
+      createMany: vi.fn().mockResolvedValue([mockSession]),
     };
     mockAssessmentRepo = {
       create: vi.fn(),

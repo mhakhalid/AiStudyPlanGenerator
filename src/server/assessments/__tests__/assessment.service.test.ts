@@ -37,6 +37,7 @@ describe("AssessmentService.createAssessment", () => {
       create: vi.fn().mockResolvedValue(mockAssessment),
       findAllByUser: vi.fn().mockResolvedValue([mockAssessment]),
       findByIdAndUser: vi.fn().mockResolvedValue(mockAssessment),
+      findByIdAndUserWithTopics: vi.fn().mockResolvedValue({ ...mockAssessment, topics: [] }),
     };
     mockUserService = {
       ensureUserExists: vi.fn().mockResolvedValue(mockDbUser),
