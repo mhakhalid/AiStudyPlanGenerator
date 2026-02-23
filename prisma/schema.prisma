@@ -6,60 +6,79 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String   @id @default(uuid())
-  clerkId   String   @unique
-  email     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum SessionStatus {
+  PENDING
+  COMPLETED
+  MISSED
+}
 
-  assessments   Assessment[]
-  topics        Topic[]
-  studySessions StudySession[]
+model User {
+  id          String       @id @default(uuid())
+  clerkId     String       @unique
+  email       String       @unique
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  assessments Assessment[]
 }
 
 model Assessment {
-  id        String   @id @default(uuid())
-  title     String
-  dueDate   DateTime
-  weight    Float
-  createdAt DateTime @default(now())
+  id            String   @id @default(uuid())
+  userId        String
+  title         String
+  courseName    String?
+  dueAt         DateTime
+  weightPercent Int?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
+  user     User           @relation(fields: [userId], references: [id])
+  topics   Topic[]
+  sessions StudySession[]
+
+  @@index([userId])
+  @@index([dueAt])
 }
 
 model Topic {
-  id         String   @id @default(uuid())
-  name       String
-  difficulty Int
-  mastery    Int      @default(0)
-  createdAt  DateTime @default(now())
+  id           String   @id @default(uuid())
+  assessmentId String
+  name         String
+  difficulty   Int      @default(5)
+  mastery      Int      @default(5)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
+  assessment Assessment    @relation(fields: [assessmentId], references: [id])
+  sessions   StudySession[]
 }
 
 model StudySession {
-  id          String   @id @default(uuid())
-  title       String
-  scheduledAt DateTime
-  duration    Int
-  status      String   @default("pending")
-  createdAt   DateTime @default(now())
+  id              String        @id @default(uuid())
+  assessmentId    String
+  topicId         String?
+  scheduledAt     DateTime
+  durationMinutes Int
+  status          SessionStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
+  assessment Assessment  @relation(fields: [assessmentId], references: [id])
+  topic      Topic?       @relation(fields: [topicId], references: [id])
+  reflection Reflection?
 
-  reflections Reflection[]
+  @@index([assessmentId])
+  @@index([scheduledAt])
 }
 
 model Reflection {
-  id        String   @id @default(uuid())
-  sentiment String?
-  completed Boolean
-  createdAt DateTime @default(now())
+  id            String   @id @default(uuid())
+  sessionId     String   @unique
+  understanding Int
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  session   StudySession @relation(fields: [sessionId], references: [id])
-  sessionId String
+  session StudySession @relation(fields: [sessionId], references: [id])
 }

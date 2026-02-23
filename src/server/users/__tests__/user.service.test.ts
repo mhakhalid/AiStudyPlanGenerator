@@ -1,4 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Must be hoisted before any import that transitively touches @/lib/prisma,
+// otherwise the top-level `new PrismaClient()` in user.service.ts fires first.
+vi.mock("@/lib/prisma", () => ({ prisma: {} }));
+
 import { createUserService } from "../user.service";
 import type { UserRepository } from "../user.repository";
 import type { User } from "@prisma/client";
