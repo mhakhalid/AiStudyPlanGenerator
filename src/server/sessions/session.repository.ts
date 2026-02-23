@@ -15,6 +15,8 @@ export interface SessionRepository {
   create(params: CreateSessionParams): Promise<StudySession>;
   findByIdWithAssessment(id: string): Promise<SessionWithAssessmentOwner | null>;
   updateStatus(id: string, status: SessionStatus): Promise<StudySession>;
+  // Atomically insert all sessions; rolls back if any insert fails
+  createMany(params: CreateSessionParams[]): Promise<StudySession[]>;
 }
 
 export function createSessionRepository(db: PrismaClient): SessionRepository {
@@ -34,6 +36,16 @@ export function createSessionRepository(db: PrismaClient): SessionRepository {
 
     updateStatus(id, status) {
       return db.studySession.update({ where: { id }, data: { status } });
+    },
+
+    createMany(params) {
+      return db.$transaction(
+        params.map(({ assessmentId, topicId, scheduledAt, durationMinutes }) =>
+          db.studySession.create({
+            data: { assessmentId, topicId, scheduledAt, durationMinutes },
+          })
+        )
+      );
     },
   };
 }
