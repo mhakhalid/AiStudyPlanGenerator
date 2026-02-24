@@ -12,21 +12,21 @@ const TerminalOverlay = () => {
         </div>
 
         <p className="text-sm text-foreground mb-2 tracking-tight">
-          <span className="text-primary">/</span> WORKOUT ANALYSIS COMPLETE
+          <span className="text-primary">/</span> STUDY PLAN GENERATED
         </p>
 
         <div className="space-y-1.5 text-xs text-muted-foreground">
           <div className="flex items-center">
             <div className="text-primary mr-2">01</div>
-            <span>30 min strength training (upper body)</span>
+            <span>60 min integration techniques (calculus)</span>
           </div>
           <div className="flex items-center">
             <div className="text-primary mr-2">02</div>
-            <span>20 min cardio (moderate intensity)</span>
+            <span>45 min matrix operations (linear algebra)</span>
           </div>
           <div className="flex items-center">
             <div className="text-primary mr-2">03</div>
-            <span>10 min flexibility (recovery)</span>
+            <span>30 min spaced-repetition review</span>
           </div>
         </div>
       </div>

@@ -20,7 +20,7 @@ const HomePage = () => {
                   <span className="text-foreground">Transform</span>
                 </div>
                 <div>
-                  <span className="text-primary">Your Body</span>
+                  <span className="text-primary">Your Studies</span>
                 </div>
                 <div className="pt-2">
                   <span className="text-foreground">With Advanced</span>
@@ -35,8 +35,8 @@ const HomePage = () => {
               <div className="h-px w-full bg-gradient-to-r from-primary via-secondary to-primary opacity-50"></div>
 
               <p className="text-xl text-muted-foreground w-2/3">
-                Talk to our AI assistant and get personalized diet plans and workout routines
-                designed just for you
+                Tell our AI your assessment goals and get a personalised study schedule with
+                spaced-repetition sessions designed just for you
               </p>
 
               {/* STATS */}
@@ -53,7 +53,7 @@ const HomePage = () => {
                 <div className="h-12 w-px bg-gradient-to-b from-transparent via-border to-transparent"></div>
                 <div className="flex flex-col">
                   <div className="text-2xl text-primary">100%</div>
-                  <div className="text-xs uppercase tracking-wider">PERSONALIZED</div>
+                  <div className="text-xs uppercase tracking-wider">PERSONALISED</div>
                 </div>
               </div>
 
@@ -64,8 +64,8 @@ const HomePage = () => {
                   asChild
                   className="overflow-hidden bg-primary text-primary-foreground px-8 py-6 text-lg font-medium"
                 >
-                  <Link href={"/generate-program"} className="flex items-center font-mono">
-                    Build Your Program
+                  <Link href={"/planner"} className="flex items-center font-mono">
+                    Create Study Plan
                     <ArrowRightIcon className="ml-2 size-5" />
                   </Link>
                 </Button>
@@ -87,7 +87,7 @@ const HomePage = () => {
                 <div className="relative overflow-hidden rounded-lg bg-cyber-black">
                   <img
                     src="/hero-ai3.png"
-                    alt="AI Fitness Coach"
+                    alt="AI Study Planner"
                     className="size-full object-cover object-center"
                   />
 

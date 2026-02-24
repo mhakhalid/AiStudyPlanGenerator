@@ -1,7 +1,7 @@
 "use client";
 
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
-import { DumbbellIcon, HomeIcon, UserIcon, ZapIcon } from "lucide-react";
+import { BookOpenIcon, HomeIcon, UserIcon, ZapIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 
@@ -17,7 +17,7 @@ const Navbar = () => {
             <ZapIcon className="w-4 h-4 text-primary" />
           </div>
           <span className="text-xl font-bold font-mono">
-            code<span className="text-primary">flex</span>.ai
+            study<span className="text-primary">plan</span>.ai
           </span>
         </Link>
 
@@ -34,11 +34,11 @@ const Navbar = () => {
               </Link>
 
               <Link
-                href="/generate-program"
+                href="/planner"
                 className="flex items-center gap-1.5 text-sm hover:text-primary transition-colors"
               >
-                <DumbbellIcon size={16} />
-                <span>Generate</span>
+                <BookOpenIcon size={16} />
+                <span>Planner</span>
               </Link>
 
               <Link
@@ -53,7 +53,7 @@ const Navbar = () => {
                 variant="outline"
                 className="ml-2 border-primary/50 text-primary hover:text-white hover:bg-primary/10"
               >
-                <Link href="/generate-program">Get Started</Link>
+                <Link href="/planner">Get Started</Link>
               </Button>
               <UserButton />
             </>

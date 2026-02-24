@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CodeFlex AI - Get Jacked",
-  description: "A modern fitness AI platform to get jacked for free.",
+  title: "AI Study Planner",
+  description: "AI-powered adaptive study planning — generate personalised study schedules and track your progress.",
 };
 
 export default function RootLayout({
