@@ -17,8 +17,8 @@ import { aiPlanResponseSchema } from "./plan-generation.schema";
 
 export interface PlanGenerationService {
   /**
-   * Generates a study plan for the given assessment via the AI provider
-   * and atomically persists the resulting sessions.
+   * Generates a study plan for the given assessment via the AI provider and
+   * atomically replaces any existing sessions with the new ones (idempotent).
    *
    * Throws:
    *  - NOT_FOUND (404)            – assessment does not exist / not owned by user
@@ -46,7 +46,7 @@ export function createPlanGenerationService(
       // 1. Resolve DB user (upsert via Clerk identity)
       const user = await users.ensureUserExists(clerkId, email);
 
-      // 2. Load assessment + topics, enforcing ownership in the same query
+      // 2. Load assessment + topics with ownership enforced in the same query
       const assessment = await assessmentRepo.findByIdAndUserWithTopics(
         assessmentId,
         user.id
@@ -70,11 +70,7 @@ export function createPlanGenerationService(
       } catch (err) {
         // Re-throw typed AppErrors (e.g. AI_MISCONFIGURED) unchanged
         if (err instanceof AppError) throw err;
-        throw new AppError(
-          "AI provider request failed",
-          502,
-          "AI_REQUEST_FAILED"
-        );
+        throw new AppError("AI provider request failed", 502, "AI_REQUEST_FAILED");
       }
 
       // 4. Parse JSON — the model is instructed to return pure JSON
@@ -82,11 +78,7 @@ export function createPlanGenerationService(
       try {
         parsed = JSON.parse(rawText);
       } catch {
-        throw new AppError(
-          "AI returned malformed JSON",
-          502,
-          "AI_INVALID_RESPONSE"
-        );
+        throw new AppError("AI returned malformed JSON", 502, "AI_INVALID_RESPONSE");
       }
 
       // 5. Validate the parsed value against the expected schema
@@ -99,7 +91,7 @@ export function createPlanGenerationService(
         );
       }
 
-      // 6. Guard against the AI hallucinating topicIds that don't belong to this assessment
+      // 6. Guard against the AI hallucinating topicIds not in this assessment
       const validTopicIds = new Set(assessment.topics.map((t) => t.id));
       for (const session of validation.data.sessions) {
         if (!validTopicIds.has(session.topicId)) {
@@ -111,11 +103,11 @@ export function createPlanGenerationService(
         }
       }
 
-      // 7. Persist sessions atomically — all or nothing
-      // Note: focusLevel and notes from the AI response are validated above but
-      // not stored here (StudySession schema has no columns for them yet).
-      // Phase 4B can add those columns with a migration.
-      const sessions = await sessionRepo.createMany(
+      // 7. Idempotent persist: replaceForAssessment deletes existing sessions
+      //    (and their reflections) then inserts the new ones — all in one transaction.
+      //    focusLevel and notes are validated above but not stored yet (no schema columns).
+      const sessions = await sessionRepo.replaceForAssessment(
+        assessmentId,
         validation.data.sessions.map((s) => ({
           assessmentId,
           topicId: s.topicId,
@@ -131,8 +123,7 @@ export function createPlanGenerationService(
 
 // ---------------------------------------------------------------------------
 // Module-level singleton — lazily wires the real Gemini provider so a missing
-// GEMINI_API_KEY does not crash the process at import time (surfaces at request
-// time instead, as a typed 500 AppError).
+// GEMINI_API_KEY does not crash the process at import time.
 // ---------------------------------------------------------------------------
 const _assessmentRepo = createAssessmentRepository(prisma);
 const _sessionRepo = createSessionRepository(prisma);

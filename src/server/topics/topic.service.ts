@@ -21,6 +21,7 @@ export interface TopicService {
     assessmentId: string,
     data: CreateTopicData
   ): Promise<Topic>;
+  listTopics(clerkId: string, email: string, assessmentId: string): Promise<Topic[]>;
 }
 
 export function createTopicService(
@@ -36,6 +37,15 @@ export function createTopicService(
         throw new AppError("Assessment not found", 404, "NOT_FOUND");
       }
       return topicRepo.create({ assessmentId, ...data });
+    },
+
+    async listTopics(clerkId, email, assessmentId) {
+      const user = await users.ensureUserExists(clerkId, email);
+      const assessment = await assessmentRepo.findByIdAndUser(assessmentId, user.id);
+      if (!assessment) {
+        throw new AppError("Assessment not found", 404, "NOT_FOUND");
+      }
+      return topicRepo.findAllByAssessment(assessmentId);
     },
   };
 }

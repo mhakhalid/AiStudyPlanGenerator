@@ -4,8 +4,8 @@ import type { AiProvider } from "./ai.provider";
 
 /**
  * Creates a Gemini-backed AiProvider.
- * The API key is read at construction time so callers can control when
- * the key is resolved (e.g. lazily, at first request).
+ * The API key is read at construction time so callers control when the key is
+ * resolved (e.g. lazily, at first request — not at module evaluation time).
  */
 export function createGeminiProvider(apiKey: string): AiProvider {
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -29,8 +29,8 @@ export function createGeminiProvider(apiKey: string): AiProvider {
 
 /**
  * Lazily-resolved singleton.
- * Not created at module evaluation time so a missing env var does not crash
- * the process on startup — the error surfaces at the first actual request.
+ * Not created at module evaluation time so a missing GEMINI_API_KEY does not
+ * crash the process on startup — the error surfaces at the first request.
  */
 let _instance: AiProvider | null = null;
 

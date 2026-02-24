@@ -12,6 +12,24 @@ const createSessionBody = z.object({
   topicId: z.string().uuid().optional(),
 });
 
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ assessmentId: string }> }
+) {
+  try {
+    const { assessmentId } = paramsSchema.parse(await params);
+    const { clerkId, email } = await getCurrentUser();
+    const sessions = await sessionService.listSessionsForAssessment(
+      clerkId,
+      email,
+      assessmentId
+    );
+    return NextResponse.json({ sessions });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ assessmentId: string }> }

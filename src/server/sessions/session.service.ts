@@ -10,6 +10,7 @@ import {
   createSessionRepository,
   type SessionRepository,
   type CreateSessionParams,
+  type SessionWithDetails,
 } from "./session.repository";
 
 export type CreateSessionData = Omit<CreateSessionParams, "assessmentId">;
@@ -27,6 +28,11 @@ export interface SessionService {
     sessionId: string,
     status: SessionStatus
   ): Promise<StudySession>;
+  listSessionsForAssessment(
+    clerkId: string,
+    email: string,
+    assessmentId: string
+  ): Promise<SessionWithDetails[]>;
 }
 
 export function createSessionService(
@@ -54,6 +60,15 @@ export function createSessionService(
         throw new AppError("Forbidden", 403, "FORBIDDEN");
       }
       return sessionRepo.updateStatus(sessionId, status);
+    },
+
+    async listSessionsForAssessment(clerkId, email, assessmentId) {
+      const user = await users.ensureUserExists(clerkId, email);
+      const assessment = await assessmentRepo.findByIdAndUser(assessmentId, user.id);
+      if (!assessment) {
+        throw new AppError("Assessment not found", 404, "NOT_FOUND");
+      }
+      return sessionRepo.findAllByAssessmentWithDetails(assessmentId);
     },
   };
 }

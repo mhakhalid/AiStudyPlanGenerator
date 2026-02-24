@@ -18,6 +18,18 @@ const mockDbUser = {
   updatedAt: new Date("2024-01-01T00:00:00.000Z"),
 };
 
+const mockAssessment = {
+  id: "assessment-uuid-1",
+  userId: "user-uuid-1",
+  title: "Final Exam",
+  courseName: "Mathematics",
+  dueAt: new Date("2024-06-01T00:00:00.000Z"),
+  weightPercent: 40,
+  notes: null,
+  createdAt: new Date("2024-01-01T00:00:00.000Z"),
+  updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+};
+
 const mockSession: StudySession = {
   id: "session-uuid-1",
   assessmentId: "assessment-uuid-1",
@@ -29,6 +41,13 @@ const mockSession: StudySession = {
   updatedAt: new Date("2024-01-01T00:00:00.000Z"),
 };
 
+const mockSessionWithDetails = {
+  ...mockSession,
+  topic: { name: "Calculus" },
+  reflection: null,
+};
+
+// ── updateStatus ──────────────────────────────────────────────────────────────
 describe("SessionService.updateStatus", () => {
   let mockSessionRepo: SessionRepository;
   let mockAssessmentRepo: AssessmentRepository;
@@ -45,12 +64,14 @@ describe("SessionService.updateStatus", () => {
         ...mockSession,
         status: SessionStatus.COMPLETED,
       }),
-      createMany: vi.fn().mockResolvedValue([mockSession]),
+      findAllByAssessmentWithDetails: vi.fn().mockResolvedValue([mockSessionWithDetails]),
+      replaceForAssessment: vi.fn().mockResolvedValue([mockSession]),
     };
     mockAssessmentRepo = {
       create: vi.fn(),
       findAllByUser: vi.fn(),
-      findByIdAndUser: vi.fn(),
+      findByIdAndUser: vi.fn().mockResolvedValue(mockAssessment),
+      findByIdAndUserWithTopics: vi.fn(),
     };
     mockUserService = {
       ensureUserExists: vi.fn().mockResolvedValue(mockDbUser),
@@ -116,5 +137,76 @@ describe("SessionService.updateStatus", () => {
         SessionStatus.COMPLETED
       )
     ).rejects.toMatchObject({ code: "FORBIDDEN", statusCode: 403 });
+  });
+});
+
+// ── listSessionsForAssessment ─────────────────────────────────────────────────
+describe("SessionService.listSessionsForAssessment", () => {
+  let mockSessionRepo: SessionRepository;
+  let mockAssessmentRepo: AssessmentRepository;
+  let mockUserService: UserService;
+
+  beforeEach(() => {
+    mockSessionRepo = {
+      create: vi.fn(),
+      findByIdWithAssessment: vi.fn(),
+      updateStatus: vi.fn(),
+      findAllByAssessmentWithDetails: vi.fn().mockResolvedValue([mockSessionWithDetails]),
+      replaceForAssessment: vi.fn(),
+    };
+    mockAssessmentRepo = {
+      create: vi.fn(),
+      findAllByUser: vi.fn(),
+      findByIdAndUser: vi.fn().mockResolvedValue(mockAssessment),
+      findByIdAndUserWithTopics: vi.fn(),
+    };
+    mockUserService = {
+      ensureUserExists: vi.fn().mockResolvedValue(mockDbUser),
+    };
+  });
+
+  it("returns sessions with topic and reflection data for an owned assessment", async () => {
+    const service = createSessionService(
+      mockSessionRepo,
+      mockAssessmentRepo,
+      mockUserService
+    );
+
+    const result = await service.listSessionsForAssessment(
+      "clerk_abc123",
+      "test@example.com",
+      "assessment-uuid-1"
+    );
+
+    expect(mockAssessmentRepo.findByIdAndUser).toHaveBeenCalledWith(
+      "assessment-uuid-1",
+      "user-uuid-1"
+    );
+    expect(mockSessionRepo.findAllByAssessmentWithDetails).toHaveBeenCalledWith(
+      "assessment-uuid-1"
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].topic).toEqual({ name: "Calculus" });
+    expect(result[0].reflection).toBeNull();
+  });
+
+  it("throws NOT_FOUND when assessment does not belong to the user", async () => {
+    mockAssessmentRepo.findByIdAndUser = vi.fn().mockResolvedValue(null);
+    const service = createSessionService(
+      mockSessionRepo,
+      mockAssessmentRepo,
+      mockUserService
+    );
+
+    await expect(
+      service.listSessionsForAssessment(
+        "clerk_abc123",
+        "test@example.com",
+        "nonexistent-assessment"
+      )
+    ).rejects.toMatchObject({ code: "NOT_FOUND", statusCode: 404 });
+
+    // Repo must never be called if ownership check fails
+    expect(mockSessionRepo.findAllByAssessmentWithDetails).not.toHaveBeenCalled();
   });
 });

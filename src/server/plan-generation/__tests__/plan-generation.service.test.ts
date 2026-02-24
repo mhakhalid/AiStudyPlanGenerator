@@ -10,17 +10,14 @@ import type { UserService } from "@/server/users/user.service";
 import type { AiProvider } from "@/server/ai/ai.provider";
 import { SessionStatus } from "@prisma/client";
 
-// ---------------------------------------------------------------------------
-// Fixtures
-// ---------------------------------------------------------------------------
+// ── Fixtures — all IDs are real UUID v4 values (Zod validates topicId format) ──
 
-// Real UUID v4 values required — Zod's z.string().uuid() validates topicId in the AI response
 const IDS = {
-  user:        "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44",
-  assessment:  "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
-  topic1:      "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
-  topic2:      "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
-  session:     "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55",
+  user:       "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44",
+  assessment: "c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33",
+  topic1:     "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+  topic2:     "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22",
+  session:    "e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55",
 } as const;
 
 const mockUser = {
@@ -94,9 +91,7 @@ const mockPersistedSession = {
   updatedAt: new Date("2024-01-01"),
 };
 
-// ---------------------------------------------------------------------------
-// Test suite
-// ---------------------------------------------------------------------------
+// ── Test suite ─────────────────────────────────────────────────────────────────
 
 describe("PlanGenerationService.generatePlan", () => {
   let mockAssessmentRepo: AssessmentRepository;
@@ -108,7 +103,6 @@ describe("PlanGenerationService.generatePlan", () => {
     mockUserService = {
       ensureUserExists: vi.fn().mockResolvedValue(mockUser),
     };
-
     mockAssessmentRepo = {
       create: vi.fn(),
       findAllByUser: vi.fn(),
@@ -117,22 +111,21 @@ describe("PlanGenerationService.generatePlan", () => {
         .fn()
         .mockResolvedValue(mockAssessmentWithTopics),
     };
-
     mockSessionRepo = {
       create: vi.fn(),
       findByIdWithAssessment: vi.fn(),
       updateStatus: vi.fn(),
-      createMany: vi
+      findAllByAssessmentWithDetails: vi.fn(),
+      replaceForAssessment: vi
         .fn()
         .mockResolvedValue([mockPersistedSession, mockPersistedSession]),
     };
-
     mockAi = {
       complete: vi.fn().mockResolvedValue(validAiResponse),
     };
   });
 
-  it("persists the correct session params for a valid AI response", async () => {
+  it("calls replaceForAssessment (idempotent) with the correct session params", async () => {
     const service = createPlanGenerationService(
       mockAssessmentRepo,
       mockSessionRepo,
@@ -147,21 +140,41 @@ describe("PlanGenerationService.generatePlan", () => {
     );
 
     expect(mockAi.complete).toHaveBeenCalledOnce();
-    expect(mockSessionRepo.createMany).toHaveBeenCalledWith([
-      {
-        assessmentId: IDS.assessment,
-        topicId: IDS.topic1,
-        scheduledAt: new Date("2024-11-01T09:00:00.000Z"),
-        durationMinutes: 90,
-      },
-      {
-        assessmentId: IDS.assessment,
-        topicId: IDS.topic2,
-        scheduledAt: new Date("2024-11-03T09:00:00.000Z"),
-        durationMinutes: 60,
-      },
-    ]);
+    // Idempotency: replaceForAssessment (not createMany) must be called
+    expect(mockSessionRepo.replaceForAssessment).toHaveBeenCalledWith(
+      IDS.assessment,
+      [
+        {
+          assessmentId: IDS.assessment,
+          topicId: IDS.topic1,
+          scheduledAt: new Date("2024-11-01T09:00:00.000Z"),
+          durationMinutes: 90,
+        },
+        {
+          assessmentId: IDS.assessment,
+          topicId: IDS.topic2,
+          scheduledAt: new Date("2024-11-03T09:00:00.000Z"),
+          durationMinutes: 60,
+        },
+      ]
+    );
     expect(result).toHaveLength(2);
+  });
+
+  it("does NOT call replaceForAssessment if AI response is invalid (no partial writes)", async () => {
+    mockAi.complete = vi.fn().mockResolvedValue("{ broken json");
+    const service = createPlanGenerationService(
+      mockAssessmentRepo,
+      mockSessionRepo,
+      mockUserService,
+      mockAi
+    );
+
+    await expect(
+      service.generatePlan("clerk_abc123", "test@example.com", IDS.assessment)
+    ).rejects.toMatchObject({ code: "AI_INVALID_RESPONSE" });
+
+    expect(mockSessionRepo.replaceForAssessment).not.toHaveBeenCalled();
   });
 
   it("throws NOT_FOUND when assessment does not exist or is not owned", async () => {
@@ -209,7 +222,6 @@ describe("PlanGenerationService.generatePlan", () => {
   });
 
   it("throws AI_VALIDATION_FAILED when AI JSON does not match the schema", async () => {
-    // durationMinutes: 5 violates the min(15) rule; topicId is not a UUID
     mockAi.complete = vi.fn().mockResolvedValue(
       JSON.stringify({
         sessions: [{ topicId: "not-a-uuid", date: "bad-date", durationMinutes: 5 }],
@@ -232,8 +244,7 @@ describe("PlanGenerationService.generatePlan", () => {
       JSON.stringify({
         sessions: [
           {
-            // Valid UUID format but not in mockTopics
-            topicId: "00000000-0000-0000-0000-000000000000",
+            topicId: "00000000-0000-0000-0000-000000000000", // valid UUID but not in mockTopics
             date: "2024-11-01T09:00:00.000Z",
             durationMinutes: 60,
             focusLevel: 5,
@@ -251,21 +262,5 @@ describe("PlanGenerationService.generatePlan", () => {
     await expect(
       service.generatePlan("clerk_abc123", "test@example.com", IDS.assessment)
     ).rejects.toMatchObject({ code: "AI_INVALID_TOPIC", statusCode: 502 });
-  });
-
-  it("does not call createMany when AI response is invalid", async () => {
-    mockAi.complete = vi.fn().mockResolvedValue("{ broken json");
-    const service = createPlanGenerationService(
-      mockAssessmentRepo,
-      mockSessionRepo,
-      mockUserService,
-      mockAi
-    );
-
-    await expect(
-      service.generatePlan("clerk_abc123", "test@example.com", IDS.assessment)
-    ).rejects.toMatchObject({ code: "AI_INVALID_RESPONSE" });
-
-    expect(mockSessionRepo.createMany).not.toHaveBeenCalled();
   });
 });

@@ -2,7 +2,6 @@ import type { AssessmentWithTopics } from "@/server/assessments/assessment.repos
 
 /**
  * Builds the LLM prompt for study-plan generation.
- *
  * Embeds exact topic UUIDs so the model can reference them directly.
  * The model is instructed to return ONLY a JSON object — no prose, no markdown.
  */

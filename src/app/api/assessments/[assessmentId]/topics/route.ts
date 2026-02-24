@@ -12,6 +12,20 @@ const createTopicBody = z.object({
   mastery: z.number().int().min(1).max(10).optional(),
 });
 
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ assessmentId: string }> }
+) {
+  try {
+    const { assessmentId } = paramsSchema.parse(await params);
+    const { clerkId, email } = await getCurrentUser();
+    const topics = await topicService.listTopics(clerkId, email, assessmentId);
+    return NextResponse.json({ topics });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ assessmentId: string }> }

@@ -3,10 +3,9 @@ import { z } from "zod";
 /**
  * Schema for a single session item returned by the AI.
  *
- * NOTE: `focusLevel` and `notes` are validated here but are not persisted in
- * the current schema (StudySession has no columns for them). They are kept in
- * the response contract so Phase 4B can add the columns without breaking the
- * AI interface.
+ * NOTE: `focusLevel` and `notes` are validated here but not persisted in the
+ * current schema (StudySession has no columns for them). They are kept in the
+ * contract so Phase 4C can add those columns without breaking the AI interface.
  */
 export const generatedSessionSchema = z.object({
   topicId: z.string().uuid("topicId must be a valid UUID"),
