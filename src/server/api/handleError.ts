@@ -21,5 +21,6 @@ export function handleError(err: unknown): NextResponse<ApiErrorPayload> {
   if (err instanceof AppError) {
     return apiError(err.code, err.message, err.statusCode);
   }
+  if (process.env.NODE_ENV !== "production") console.error("[handleError]", err);
   return apiError("INTERNAL_ERROR", "An unexpected error occurred", 500);
 }

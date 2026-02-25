@@ -19,7 +19,8 @@ model User {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  assessments Assessment[]
+  assessments   Assessment[]
+  semesterPlans SemesterPlan[]
 }
 
 model Assessment {
@@ -81,4 +82,95 @@ model Reflection {
   updatedAt     DateTime @updatedAt
 
   session StudySession @relation(fields: [sessionId], references: [id])
+}
+
+// ---------------------------------------------------------------------------
+// Semester Planner
+// ---------------------------------------------------------------------------
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model SemesterPlan {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User                   @relation(fields: [userId], references: [id])
+  courses      SemesterCourse[]
+  availability SemesterAvailability[]
+  sessions     SemesterSession[]
+
+  @@index([userId])
+}
+
+model SemesterCourse {
+  id             String   @id @default(uuid())
+  semesterPlanId String
+  name           String
+  creditHours    Int?
+  priority       Int      @default(5)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  semesterPlan SemesterPlan      @relation(fields: [semesterPlanId], references: [id], onDelete: Cascade)
+  exams        SemesterExam[]
+  sessions     SemesterSession[]
+
+  @@index([semesterPlanId])
+}
+
+model SemesterExam {
+  id               String   @id @default(uuid())
+  semesterCourseId String
+  title            String
+  scheduledAt      DateTime
+  weightPercent    Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  semesterCourse SemesterCourse @relation(fields: [semesterCourseId], references: [id], onDelete: Cascade)
+
+  @@index([semesterCourseId])
+}
+
+model SemesterAvailability {
+  id             String    @id @default(uuid())
+  semesterPlanId String
+  dayOfWeek      DayOfWeek
+  startHour      Int
+  endHour        Int
+  createdAt      DateTime  @default(now())
+
+  semesterPlan SemesterPlan @relation(fields: [semesterPlanId], references: [id], onDelete: Cascade)
+
+  @@index([semesterPlanId])
+}
+
+model SemesterSession {
+  id               String        @id @default(uuid())
+  semesterPlanId   String
+  semesterCourseId String
+  scheduledAt      DateTime
+  durationMinutes  Int
+  status           SessionStatus @default(PENDING)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  semesterPlan   SemesterPlan   @relation(fields: [semesterPlanId], references: [id], onDelete: Cascade)
+  semesterCourse SemesterCourse @relation(fields: [semesterCourseId], references: [id], onDelete: Cascade)
+
+  @@index([semesterPlanId])
+  @@index([scheduledAt])
 }

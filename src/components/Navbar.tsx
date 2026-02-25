@@ -1,7 +1,7 @@
 "use client";
 
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
-import { BookOpenIcon, HomeIcon, UserIcon, ZapIcon } from "lucide-react";
+import { BookOpenIcon, CalendarIcon, HomeIcon, UserIcon, ZapIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 
@@ -39,6 +39,14 @@ const Navbar = () => {
               >
                 <BookOpenIcon size={16} />
                 <span>Planner</span>
+              </Link>
+
+              <Link
+                href="/semester"
+                className="flex items-center gap-1.5 text-sm hover:text-primary transition-colors"
+              >
+                <CalendarIcon size={16} />
+                <span>Semester</span>
               </Link>
 
               <Link
