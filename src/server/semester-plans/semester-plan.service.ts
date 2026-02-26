@@ -92,6 +92,7 @@ export function createSemesterPlanService(
         rawText = await ai.complete(prompt);
       } catch (err) {
         if (err instanceof AppError) throw err;
+        console.error("[AI Error - semester-plan]", err);
         throw new AppError("AI provider request failed", 502, "AI_REQUEST_FAILED");
       }
 

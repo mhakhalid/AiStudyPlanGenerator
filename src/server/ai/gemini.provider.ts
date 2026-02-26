@@ -13,7 +13,7 @@ export function createGeminiProvider(apiKey: string): AiProvider {
   return {
     async complete(prompt: string): Promise<string> {
       const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         generationConfig: {
           // Force pure JSON output — no markdown fences, no prose
           responseMimeType: "application/json",

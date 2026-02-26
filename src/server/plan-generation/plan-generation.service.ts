@@ -70,6 +70,7 @@ export function createPlanGenerationService(
       } catch (err) {
         // Re-throw typed AppErrors (e.g. AI_MISCONFIGURED) unchanged
         if (err instanceof AppError) throw err;
+        console.error("[AI Error - plan-generation]", err);
         throw new AppError("AI provider request failed", 502, "AI_REQUEST_FAILED");
       }
 
