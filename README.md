@@ -1,4 +1,6 @@
 🤖 **AI Study Planner**
+
+[![CI](https://github.com/mhakhalid/AiStudyPlanGenerator/actions/workflows/ci.yml/badge.svg)](https://github.com/mhakhalid/AiStudyPlanGenerator/actions/workflows/ci.yml)
 Transforming static schedules into dynamic, conversational learning systems.
 
 ![Demo App](/public/screenshot-for-readme.png)
